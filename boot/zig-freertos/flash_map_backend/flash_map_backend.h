@@ -31,6 +31,8 @@ extern "C" {
  */
 #include <inttypes.h>
 #include <sys/types.h>
+#include "board.h"
+#include "ff.h"
 
 /* Structure describing a flash area. */
 
@@ -44,6 +46,7 @@ struct flash_area
   uint32_t    fa_off;        /* The flash offset from the beginning */
   uint32_t    fa_size;       /* The size of this sector */
 
+  void *fp;
 
 };
 
