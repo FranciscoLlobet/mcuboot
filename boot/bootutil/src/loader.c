@@ -4,6 +4,7 @@
  * Copyright (c) 2016-2020 Linaro LTD
  * Copyright (c) 2016-2019 JUUL Labs
  * Copyright (c) 2019-2023 Arm Limited
+ * Copyright (c) 2024 Nordic Semiconductor ASA
  *
  * Original license:
  *
@@ -469,6 +470,10 @@ boot_write_status(const struct boot_loader_state *state, struct boot_status *bs)
     erased_val = flash_area_erased_val(fap);
     memset(buf, erased_val, BOOT_MAX_ALIGN);
     buf[0] = bs->state;
+
+    BOOT_LOG_DBG("writing swap status; fa_id=%d off=0x%lx (0x%lx)",
+                 flash_area_get_id(fap), (unsigned long)off,
+                 (unsigned long)flash_area_get_off(fap) + off);
 
     rc = flash_area_write(fap, off, buf, align);
     if (rc != 0) {
@@ -2207,8 +2212,13 @@ context_boot_go(struct boot_loader_state *state, struct boot_rsp *rsp)
         if (BOOT_SWAP_TYPE(state) != BOOT_SWAP_TYPE_NONE) {
             /* Attempt to read an image header from each slot. Ensure that image
              * headers in slots are aligned with headers in boot_data.
+	     * Note: Quite complicated internal logic of boot_read_image_headers
+	     * uses boot state, the last parm, to figure out in which slot which
+	     * header is located; when boot state is not provided, then it
+	     * is assumed that headers are at proper slots (we are not in
+	     * the middle of moving images, etc).
              */
-            rc = boot_read_image_headers(state, false, &bs);
+            rc = boot_read_image_headers(state, false, NULL);
             if (rc != 0) {
                 FIH_SET(fih_rc, FIH_FAILURE);
                 goto out;
